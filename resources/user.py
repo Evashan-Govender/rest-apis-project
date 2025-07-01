@@ -8,7 +8,8 @@ from flask_jwt_extended import (
     get_jwt,
     jwt_required,
 )
-
+import requests
+import os
 from db import db
 from models import UserModel
 from schemas import UserSchema
@@ -16,6 +17,15 @@ from blocklist import BLOCKLIST
 
 
 blp = Blueprint("Users", "users", description="Operations on users")
+
+def send_simple_message():
+  	return requests.post(
+  		"https://api.mailgun.net/v3/sandboxc7318e9cc7a44de3bc5174bc9ed1ce67.mailgun.org/messages",
+  		auth=("api", os.getenv("MAILGUN_API_KEY")),
+  		data={"from": "Mailgun Sandbox <postmaster@sandboxc7318e9cc7a44de3bc5174bc9ed1ce67.mailgun.org>",
+			"to": "Evashan Govender <evashan.govender@sambeconsulting.com>",
+  			"subject": "Hello Evashan Govender",
+  			"text": "Congratulations Evashan Govender, you just sent an email with Mailgun! You are truly awesome!"})
 
 @blp.route("/logout")
 class UserLogout(MethodView):
@@ -43,6 +53,8 @@ class UserRegister(MethodView):
         db.session.add(user)
         # Commit the session to save the user in the database
         db.session.commit()
+        send_simple_message()  # Send a welcome email
+
 
         # Return a success message and HTTP status code 201 (Created)
         return {"message": "User created successfully."}, 201
